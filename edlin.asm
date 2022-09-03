@@ -1,4 +1,4 @@
-%include "io.inc"
+%include "edlin.inc"
 
 section .text
 global _start
@@ -13,12 +13,12 @@ mloop:
 	mov eax, 3
 	mov ebx, 0
 	mov ecx, ibuf 
-	mov edx, 50
+	mov edx, 1024 
 	int 80h
 
 	mov esi, ibuf
 	xor eax, eax
-	mov ecx, 50
+	mov ecx, 1024 
 
 ploop:
 	mov al, [esi]
@@ -104,7 +104,7 @@ exit:
 	mov eax, 4
 	mov ebx, 1
 	mov ecx, fbuf
-	mov edx, 20
+	mov edx, 100 
 	int 80h
 
 	mov eax, 1
