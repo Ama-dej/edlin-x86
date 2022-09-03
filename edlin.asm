@@ -111,23 +111,6 @@ exit:
 	mov ebx, 0
 	int 80h
 
-clr_ibuf:
-	push ebx
-	push ecx
-
-	mov ebx, ibuf
-	xor ecx, ecx
-
-.clr_L:
-	mov byte[ebx + ecx], 0
-	inc ecx
-	cmp ecx, 1024 
-	jl .clr_L
-
-	pop ecx
-	pop ebx
-	ret
-
 section .data
 	cur_line: dd 0
 	cur_index: dd 0

@@ -1,3 +1,20 @@
+clr_ibuf:
+	push ebx
+	push ecx
+
+	mov ebx, ibuf
+	xor ecx, ecx
+
+.clr_L:
+	mov byte[ebx + ecx], 0
+	inc ecx
+	cmp ecx, 1024 
+	jl .clr_L
+
+	pop ecx
+	pop ebx
+	ret
+
 hprintln:
 	pusha 
 
