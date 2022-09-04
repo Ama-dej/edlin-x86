@@ -15,6 +15,23 @@ clr_ibuf:
 	pop ebx
 	ret
 
+clr_args:
+	push eax
+	push ecx
+
+	mov ecx, 3
+	mov eax, args
+
+.L:
+	mov dword[eax], -1
+	add eax, 4
+	dec ecx
+	jnz .L
+
+	pop ecx
+	pop eax
+	ret
+
 hprintln:
 	pusha 
 
@@ -39,6 +56,65 @@ hprintln:
 	int 80h
 
 	popa
+	ret
+
+iprint:
+	pusha
+
+	mov ebx, 10
+	xor ecx, ecx	
+
+.div_l:
+	xor edx, edx
+	idiv ebx
+
+	add edx, 48
+	push edx
+
+	inc ecx
+
+	cmp eax, 0
+	jnz .div_l
+
+.print_l:
+	pop eax
+	call putchar
+	dec ecx
+	jnz .print_l
+
+	popa
+	ret	
+
+atoii:
+	push ecx
+	push edx
+	push esi
+
+	mov esi, eax 
+	xor eax, eax
+	mov ebx, 10
+
+.mul_l:
+	movzx ecx, byte[esi]
+
+	cmp cl, 48
+	jl .ntnum
+	cmp cl, 57
+	jg .ntnum
+
+	xor edx, edx
+	imul ebx
+	sub cl, 48
+	add eax, ecx
+	inc esi
+	jmp .mul_l	
+
+.ntnum:
+	mov ebx, esi
+
+	pop esi
+	pop edx
+	pop ecx
 	ret
 
 putchar:

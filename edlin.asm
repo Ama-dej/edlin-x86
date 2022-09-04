@@ -6,6 +6,7 @@ _start:
 
 mloop:
 	call clr_ibuf
+	call clr_args
 
 	mov eax, '*'
 	call putchar
@@ -17,28 +18,54 @@ mloop:
 	int 80h
 
 	mov esi, ibuf
-	xor eax, eax
+	mov eax, esi 
 	mov ecx, 1024 
+	mov edx, args	
+
+	cmp byte[esi], 48
+	jl cmds
+	cmp byte[esi], 57
+	jg cmds
 
 ploop:
-	mov al, [esi]
+	call atoii
 
-	cmp al, 'a'	
-	je append
+	cmp edx, cur_line
+	je cmds 
+	mov dword[edx], eax
+	add edx, 4
+
+	mov eax, ebx
+	inc eax
+
+	cmp byte[ebx], ','
+	je ploop
+
+	mov esi, eax
+	dec esi
+
+cmds:
+	movzx eax, byte[esi]
+
+	cmp al, 'i'
+	je insert 
+
+	cmp al, 'l'
+	je list
 
 	cmp al, 'q' 
 	je exit
 
 	inc esi
 	dec ecx
-	jnz ploop
+	jnz cmds 
 
 	jmp mloop	
 
-append:
+insert:
 	mov esi, [cur_index]	
 
-aloop:
+iloop:
 	mov eax, 4
 	mov ebx, 1
 	mov ecx, a_prompt
@@ -88,17 +115,16 @@ aloop:
 
 .out:
 	mov dword[cur_index], esi
+	inc dword[cur_line]
 
-	add eax, 48
-	push eax
-	mov eax, 4
-	mov ebx, 1
-	mov ecx, esp
-	mov edx, 4 
-	int 80h
-	pop eax
+	jmp iloop
 
-	jmp aloop
+list:
+	mov esi, dword[cur_index]
+	mov edx, 10
+	mov ecx, 0
+
+	jmp mloop
 
 exit:
 	mov eax, 4
@@ -107,11 +133,25 @@ exit:
 	mov edx, 100 
 	int 80h
 
+	mov eax, [args]
+	call iprint
+	mov eax, [args+4]
+	call iprint
+	mov eax, [args+8]
+	call iprint	
+
+	mov eax, 0x0A
+	call putchar
+
+	mov eax, [cur_line]
+	call iprint
+
 	mov eax, 1
 	mov ebx, 0
 	int 80h
 
 section .data
+	args: times 3 dd -1 
 	cur_line: dd 0
 	cur_index: dd 0
 	a_prompt: db " : "
