@@ -141,17 +141,60 @@ cntlenln:
 	dec eax
 
 .L:
-	inc eax
-	cmp byte[eax], 0x0A
-	jne .L
-
 	dec ecx
-	cmp ecx, 0
-	jnl .L
-
-	sub eax, ebx
 	inc eax
+	cmp ecx, 0 
+	jg .L1
+	jmp .out
+
+.L1:
+	cmp byte[eax], 0
+	je .out
+	cmp byte[eax], 0x0A
+	je .L
+	inc eax
+	jmp .L1
+
+.out:
+	sub eax, ebx
 	pop ebx
+	ret
+
+mv_cpy:
+	pusha
+
+	add esi, eax
+
+	mov eax, edi
+	call buf_len
+	mov ecx, eax
+
+	mov ebx, esi
+
+	mov eax, ebx
+	call buf_len ;eax dolz kl bf
+
+	add esi, eax
+
+.mv:
+	movzx edx, byte[esi]
+	mov byte[esi + ecx], dl
+
+	cmp esi, ebx
+	je .cpy
+
+	dec esi
+	jmp .mv
+
+.cpy:
+	mov dl, byte[edi]
+	mov byte[esi], dl
+	inc esi
+	inc edi
+	dec ecx
+	jnz .cpy
+
+	popa
 	ret
 
 buf_len:

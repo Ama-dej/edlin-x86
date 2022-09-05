@@ -63,7 +63,15 @@ cmds:
 	jmp mloop	
 
 insert:
-	mov esi, [cur_index]	
+	mov eax, dword[args]
+	cmp eax, -1
+	je .ok
+	mov dword[cur_line], eax
+
+.ok:
+	cmp dword[cur_line], 0
+	jnz iloop
+	inc dword[cur_line]
 
 iloop:
 	mov eax, 4
@@ -84,37 +92,15 @@ iloop:
 	cmp al, '.'
 	je mloop
 
-	mov eax, ibuf 
-	call buf_len 
-	mov ebx, eax
-
 	mov eax, fbuf
-	call buf_len
+	mov ecx, dword[cur_line]
+	call cntlenln
 
-.mov_fbuf:
-	cmp eax, esi
-	je .write_fbuf
-	mov dl, byte[eax]
-	mov byte[eax+ebx], dl	
-	dec eax
-	jmp .mov_fbuf
+	;vrednost eax-a ze prhaja od cntlenln 
+	mov esi, fbuf
+	mov edi, ibuf
+	call mv_cpy
 
-.write_fbuf:
-	mov eax, esi
-	add eax, ebx
-	mov ebx, ibuf
-	
-.l:
-	cmp eax, esi
-	je .out
-	mov dl, byte[ebx]
-	mov byte[fbuf+esi], dl 
-	inc ebx
-	inc esi
-	jmp .l
-
-.out:
-	mov dword[cur_index], esi
 	inc dword[cur_line]
 
 	jmp iloop
@@ -134,17 +120,17 @@ exit:
 	int 80h
 
 	mov eax, [args]
-	call iprint
+	call hprintln 
 	mov eax, [args+4]
-	call iprint
+	call hprintln
 	mov eax, [args+8]
-	call iprint	
-
-	mov eax, 0x0A
-	call putchar
+	call hprintln
 
 	mov eax, [cur_line]
 	call iprint
+
+	mov eax, 0x0A
+	call putchar
 
 	mov eax, 1
 	mov ebx, 0
@@ -152,7 +138,7 @@ exit:
 
 section .data
 	args: times 3 dd -1 
-	cur_line: dd 0
+	cur_line: dd 0 
 	cur_index: dd 0
 	a_prompt: db " : "
 	fbuf: times 1024 * 1024 db 0
