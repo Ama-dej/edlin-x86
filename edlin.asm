@@ -47,6 +47,9 @@ ploop:
 cmds:
 	movzx eax, byte[esi]
 
+	cmp al, 'a'
+	je append
+
 	cmp al, 'i'
 	je insert 
 
@@ -60,18 +63,80 @@ cmds:
 	dec ecx
 	jnz cmds 
 
-	jmp mloop	
+	jmp mloop
+
+append:
+	mov eax, fbuf
+	mov ebx, eax
+	xor ecx, ecx
+
+.loolp:
+	mov dl, byte[eax]
+
+	cmp dl, 0x0A
+	jne .naprej
+	inc ecx
+
+.naprej:	
+	cmp dl, 0
+	jz .out
+	inc eax
+	jmp .loolp
+
+.out:
+	sub eax, ebx
+	mov esi, eax
+	mov dword[cur_line], ecx
+
+aloop:
+	mov eax, 4
+	mov ebx, 1
+	mov ecx, a_prompt
+	mov edx, 3
+	int 80h
+
+	call clr_ibuf
+
+	mov eax, 3
+	mov ebx, 0
+	mov ecx, ibuf
+	mov edx, 1024
+	int 80h
+
+	mov al, byte[ibuf]
+	cmp al, '.'
+	je mloop
+
+	push esi
+
+	mov eax, esi
+	mov esi, fbuf
+	mov edi, ibuf
+	call mv_cpy
+
+	pop esi
+
+	mov eax, ibuf
+	call buf_len
+	add esi, eax
+
+	inc dword[cur_line]
+	
+	jmp aloop
 
 insert:
 	mov eax, dword[args]
-	cmp eax, -1
-	je .ok
-	mov dword[cur_line], eax
 
-.ok:
+	cmp eax, -1
+	je .chk_if_zero 
+
+	mov dword[cur_line], eax
+	jmp iloop
+
+.chk_if_zero:
 	cmp dword[cur_line], 0
 	jnz iloop
-	inc dword[cur_line]
+	mov dword[cur_line], 1
 
 iloop:
 	mov eax, 4
