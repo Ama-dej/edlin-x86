@@ -171,11 +171,65 @@ iloop:
 	jmp iloop
 
 list:
-	mov esi, dword[cur_index]
-	mov edx, 10
-	mov ecx, 0
+	mov eax, fbuf
+	call cntln
 
-	jmp mloop
+	mov ebx, dword[cur_line]
+	mov esi, dword[args]
+
+	cmp esi, -1
+	jne .arg1
+
+	mov esi, ebx
+	sub esi, 11
+
+.arg1:
+	cmp esi, 0
+	jnl .nl
+	mov esi, 1		
+	jmp .nl
+
+.nl:
+	mov edi, dword[args+4]
+	cmp edi, -1
+	jne .arg2
+
+	mov edi, ebx
+	add edi, 20 
+
+.arg2:
+	cmp edi, eax 
+	jng lloop 
+	mov edi, eax	
+	jmp lloop
+
+lloop:
+	cmp esi, edi
+	jg mloop
+
+	mov eax, esi
+	call iprint
+
+	mov eax, ':'
+	call putchar
+
+	mov eax, 0x20 
+	cmp esi, dword[cur_line]
+	jne .neq
+	mov eax, '*' 
+
+.neq:
+	call putchar
+
+	mov eax, fbuf
+	mov ecx, esi 
+	call cntlenln
+	add eax, fbuf
+
+	call lnprint
+
+	inc esi
+	jmp lloop 
 
 exit:
 	mov eax, 4
@@ -204,7 +258,6 @@ exit:
 section .data
 	args: times 3 dd -1 
 	cur_line: dd 0 
-	cur_index: dd 0
 	a_prompt: db " : "
 	fbuf: times 1024 * 1024 db 0
 	ibuf: times 1024 db 0

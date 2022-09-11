@@ -85,6 +85,41 @@ iprint:
 	popa
 	ret	
 
+lnprint:
+	push eax
+	push ebx
+	push ecx
+	push edx
+
+	mov ecx, eax
+	call lnlen
+	mov edx, eax
+	inc edx
+	mov eax, 4
+	mov ebx, 1
+	int 80h
+
+	pop edx
+	pop ecx
+	pop ebx
+	pop eax
+	ret
+
+lnlen:
+	push ebx
+	mov ebx, eax
+
+.L:
+	cmp byte[eax], 0x0A	
+	je .out
+	inc eax
+	jmp .L
+
+.out:
+	sub eax, ebx
+	pop ebx
+	ret
+
 atoii:
 	push ecx
 	push edx
@@ -195,6 +230,33 @@ mv_cpy:
 	jnz .cpy
 
 	popa
+	ret
+
+cntln:
+	push ebx
+	push ecx
+
+	xor ebx, ebx
+	xor ecx, ecx
+
+.L:
+	mov bl, byte[eax]
+	cmp bl, 0
+	jz .out
+
+	cmp bl, 0x0A
+	jne .inc
+	inc ecx
+
+.inc:
+	inc eax
+	jmp .L
+
+.out:
+	mov eax, ecx
+
+	pop ecx
+	pop ebx
 	ret
 
 buf_len:
