@@ -112,6 +112,8 @@ lnlen:
 .L:
 	cmp byte[eax], 0x0A	
 	je .out
+	cmp byte[eax], 0
+	jz .out
 	inc eax
 	jmp .L
 
@@ -229,6 +231,43 @@ mv_cpy:
 	dec ecx
 	jnz .cpy
 
+	popa
+	ret
+
+adjust:
+	pusha
+
+	add ebx, ecx
+
+	mov edx, eax
+	mov eax, ebx
+	call lnlen
+	inc eax
+
+	add ebx, eax ;len line
+	mov esi, eax ;len line
+
+	mov eax, edx
+	call lnlen
+	sub esi, eax ;len buf
+	dec esi
+
+	;sub ebx, 5
+	
+.l:
+	mov edx, ebx
+	sub edx, esi
+
+	movzx ecx, byte[ebx]
+	mov byte[edx], cl
+
+	cmp byte[ebx], 0
+	jz .out
+
+	inc ebx	
+	jmp .l
+
+.out:
 	popa
 	ret
 

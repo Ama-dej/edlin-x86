@@ -50,6 +50,8 @@ cmds:
 	cmp al, 'a'
 	je append
 
+	cmp al, 'd'
+
 	cmp al, 'i'
 	je insert 
 
@@ -63,7 +65,7 @@ cmds:
 	dec ecx
 	jnz cmds 
 
-	jmp mloop
+	jmp replace
 
 append:
 	mov eax, fbuf
@@ -231,12 +233,66 @@ lloop:
 	inc esi
 	jmp lloop 
 
-exit:
-	mov eax, 4
-	mov ebx, 1
-	mov ecx, fbuf
-	mov edx, 100 
+replace:
+	mov esi, dword[args]
+
+	cmp esi, -1
+	je mloop
+
+	mov dword[cur_line], esi
+
+	call clr_ibuf
+
+	mov eax, 3
+	mov ebx, 0
+	mov ecx, ibuf
+	mov edx, 1024
 	int 80h
+
+	mov eax, fbuf
+	mov ecx, esi
+	call cntlenln
+
+	mov edi, fbuf 
+	add edi, eax
+
+	mov ecx, eax
+	mov eax, ibuf
+	mov ebx, fbuf
+	call adjust
+;----
+	mov eax, ibuf
+	call buf_len
+	;call lnlen
+	;inc eax 
+
+	mov esi, ibuf 
+
+rcopy:
+	mov dl, byte[esi]
+
+	mov byte[edi], dl
+	inc esi
+	inc edi
+	dec eax
+	jnz rcopy
+
+	jmp mloop
+
+exit:
+
+	mov ebx, fbuf 
+
+eprint:
+	movzx eax, byte[ebx]
+	cmp al, 0
+	jz reeeeeeEEE 
+	
+	call putchar
+	inc ebx
+	jmp eprint
+
+reeeeeeEEE:
 
 	mov eax, [args]
 	call hprintln 
