@@ -241,7 +241,35 @@ replace:
 
 	mov dword[cur_line], esi
 
+	mov eax, esi
+	call iprint
+	mov eax, ':'
+	call putchar
+	mov eax, '*'
+	call putchar 
+
 	call clr_ibuf
+
+	mov eax, fbuf
+	mov ecx, esi
+	call cntlenln
+	push eax
+	add eax, fbuf
+	mov ecx, eax
+	call lnlen
+
+	mov edx, eax
+	inc edx
+	mov ebx, 1
+	mov eax, 4
+	int 80h
+
+	mov eax, esi 
+	call iprint
+	mov eax, ':'
+	call putchar
+	mov eax, ' '
+	call putchar
 
 	mov eax, 3
 	mov ebx, 0
@@ -249,9 +277,11 @@ replace:
 	mov edx, 1024
 	int 80h
 
-	mov eax, fbuf
-	mov ecx, esi
-	call cntlenln
+	mov eax, ibuf
+	call buf_len
+	mov ebx, eax
+
+	pop eax
 
 	mov edi, fbuf 
 	add edi, eax
@@ -260,11 +290,11 @@ replace:
 	mov eax, ibuf
 	mov ebx, fbuf
 	call adjust
-;----
+
+
+rout:
 	mov eax, ibuf
 	call buf_len
-	;call lnlen
-	;inc eax 
 
 	mov esi, ibuf 
 

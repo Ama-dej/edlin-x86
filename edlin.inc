@@ -252,9 +252,29 @@ adjust:
 	sub esi, eax ;len buf
 	dec esi
 
-	;sub ebx, 5
+	cmp esi, 0
+	jge .ll 
+
+	not esi
+	inc esi
+
+	mov eax, ebx
+	call buf_len
+	mov edi, eax
+	add edi, ebx
+
+.bl:
+	movzx ecx, byte[edi]
+	mov byte[edi + esi], cl 
+
+	cmp edi, ebx
+	je .out	
+
+	dec edi
+
+	jmp .bl
 	
-.l:
+.ll:
 	mov edx, ebx
 	sub edx, esi
 
@@ -265,7 +285,7 @@ adjust:
 	jz .out
 
 	inc ebx	
-	jmp .l
+	jmp .ll
 
 .out:
 	popa
