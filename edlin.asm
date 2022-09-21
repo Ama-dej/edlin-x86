@@ -65,8 +65,9 @@ cmds:
 	dec ecx
 	jnz cmds 
 
-	jmp replace
+	jmp replaceln
 
+;Appends lines to the end of the text until '.' is given. ('a')
 append:
 	mov eax, fbuf
 	mov ebx, eax
@@ -90,7 +91,7 @@ append:
 	mov esi, eax
 	mov dword[cur_line], ecx
 
-aloop:
+.aloop:
 	mov eax, 4
 	mov ebx, 1
 	mov ecx, a_prompt
@@ -124,8 +125,10 @@ aloop:
 
 	inc dword[cur_line]
 	
-	jmp aloop
+	jmp .aloop
 
+;Inserts lines on the current index until '.' is given. (arg0, 'i')
+;arg0 defaults to current line
 insert:
 	mov eax, dword[args]
 
@@ -133,14 +136,14 @@ insert:
 	je .chk_if_zero 
 
 	mov dword[cur_line], eax
-	jmp iloop
+	jmp .iloop
 
 .chk_if_zero:
 	cmp dword[cur_line], 0
-	jnz iloop
+	jnz .iloop
 	mov dword[cur_line], 1
 
-iloop:
+.iloop:
 	mov eax, 4
 	mov ebx, 1
 	mov ecx, a_prompt
@@ -170,8 +173,11 @@ iloop:
 
 	inc dword[cur_line]
 
-	jmp iloop
+	jmp .iloop
 
+;Lists lines from arg0 to arg1. (arg0, arg1 + 'l')
+;arg0 defaults to 10 lines behind the current line.
+;arg1 defaults to 20 lines ahead of the current line.
 list:
 	mov eax, fbuf
 	call cntln
@@ -201,11 +207,11 @@ list:
 
 .arg2:
 	cmp edi, eax 
-	jng lloop 
+	jng .lloop 
 	mov edi, eax	
-	jmp lloop
+	jmp .lloop
 
-lloop:
+.lloop:
 	cmp esi, edi
 	jg mloop
 
@@ -231,16 +237,28 @@ lloop:
 	call lnprint
 
 	inc esi
-	jmp lloop 
+	jmp .lloop 
 
-replace:
+;Replaces the number of the line given. (arg0)
+replaceln:
 	mov esi, dword[args]
 
 	cmp esi, -1
 	je mloop
 
-	mov dword[cur_line], esi
+	cmp esi, 0
+	jnz .not_zr 
+	mov esi, 1
 
+.not_zr:
+	mov eax, fbuf
+	call cntln
+	inc eax
+	cmp esi, eax
+	jg entry_err 
+	mov dword[cur_line], esi
+	je .new_line 
+	
 	mov eax, esi
 	call iprint
 	mov eax, ':'
@@ -248,6 +266,7 @@ replace:
 	mov eax, '*'
 	call putchar 
 
+.new_line:
 	call clr_ibuf
 
 	mov eax, fbuf
@@ -291,26 +310,48 @@ replace:
 	mov ebx, fbuf
 	call adjust
 
-
-rout:
+.rout:
 	mov eax, ibuf
 	call buf_len
 
 	mov esi, ibuf 
 
-rcopy:
+.rcopy:
 	mov dl, byte[esi]
 
 	mov byte[edi], dl
 	inc esi
 	inc edi
 	dec eax
-	jnz rcopy
+	jnz .rcopy
 
 	jmp mloop
 
-exit:
+;error messages
+entry_err:
+	mov eax, entry_err_msg
+	mov ecx, eax
+	call buf_len
+	mov edx, eax
+	mov eax, 4
+	mov ebx, 1
+	int 80h
 
+	jmp mloop
+
+inv_input_err:
+	mov eax, inv_input_msg
+	mov ecx, eax
+	call buf_len
+	mov edx, eax
+	mov eax, 4
+	mov ebx, 1
+	int 80h
+
+	jmp mloop
+
+;exit (currently spits out technical messages) 
+exit:
 	mov ebx, fbuf 
 
 eprint:
@@ -323,7 +364,6 @@ eprint:
 	jmp eprint
 
 reeeeeeEEE:
-
 	mov eax, [args]
 	call hprintln 
 	mov eax, [args+4]
@@ -342,6 +382,8 @@ reeeeeeEEE:
 	int 80h
 
 section .data
+	entry_err_msg: db "Entry error.", 0x0A, 0
+	inv_input_msg: db "Invalid user input.", 0x0A, 0
 	args: times 3 dd -1 
 	cur_line: dd 0 
 	a_prompt: db " : "
