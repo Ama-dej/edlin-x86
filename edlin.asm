@@ -51,6 +51,7 @@ cmds:
 	je append
 
 	cmp al, 'd'
+	je delete
 
 	cmp al, 'i'
 	je insert 
@@ -126,6 +127,61 @@ append:
 	inc dword[cur_line]
 	
 	jmp .aloop
+
+delete:
+	mov esi, dword[args]
+
+	cmp esi, -1
+	jne .nz
+	
+	mov esi, dword[cur_line]
+
+.nz: 
+	cmp esi, 0
+	jz mloop
+
+	cmp esi, dword[cur_line]
+	jg .no_dec_ln
+
+	dec dword[cur_line]
+
+.no_dec_ln:
+	mov eax, fbuf
+	mov ecx, esi
+	call cntlenln
+	push eax
+	mov ecx, fbuf
+
+.l:
+	cmp byte[ecx + eax], 0x0A
+	je .out
+	cmp byte[ecx + eax], 0
+	jz .out
+	inc eax
+	jmp .l
+
+.out:
+	inc eax
+	pop edi
+	mov ebx, fbuf
+	add ebx, eax 
+	sub eax, edi
+	mov ecx, ebx
+	sub ecx, eax
+
+.l2:
+	mov dl, byte[ebx]
+	mov byte[ecx], dl	
+
+	cmp dl, 0
+	jz mloop
+
+	inc ebx
+	inc ecx
+	jmp .l2
+
+	jmp mloop
+		
 
 ;Inserts lines on the current index until '.' is given. (arg0, 'i')
 ;arg0 defaults to current line
