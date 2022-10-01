@@ -133,35 +133,46 @@ delete:
 
 	cmp esi, -1
 	jne .nz
-	
+
 	mov esi, dword[cur_line]
 
 .nz: 
 	cmp esi, 0
 	jz mloop
 
-	cmp esi, dword[cur_line]
-	jg .no_dec_ln
+	mov edi, dword[args+4]
+	cmp edi, -1
+	jne .nmo
 
-	dec dword[cur_line]
+	mov edi, esi
 
-.no_dec_ln:
+.nmo:
+	sub edi, esi
+	inc edi
+
 	mov eax, fbuf
 	mov ecx, esi
 	call cntlenln
+
 	push eax
 	mov ecx, fbuf
+	dec eax
+
+.chk_pos:
+	inc eax
+	dec edi
+	cmp edi, 0
+	jl .out
 
 .l:
 	cmp byte[ecx + eax], 0x0A
-	je .out
+	je .chk_pos
 	cmp byte[ecx + eax], 0
 	jz .out
 	inc eax
 	jmp .l
 
 .out:
-	inc eax
 	pop edi
 	mov ebx, fbuf
 	add ebx, eax 
