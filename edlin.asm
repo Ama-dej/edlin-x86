@@ -147,6 +147,28 @@ delete:
 	mov edi, esi
 
 .nmo:
+	mov ecx, dword[cur_line]
+
+	cmp ecx, esi
+	jl .del	
+
+	cmp ecx, edi
+	jle .jmp_to_nrst 
+
+	mov ebx, edi 
+	sub ebx, esi
+	inc ebx
+	sub dword[cur_line], ebx
+
+	jmp .del		
+
+.jmp_to_nrst:
+	sub ecx, esi
+	inc ecx
+
+	sub dword[cur_line], ecx
+
+.del:
 	sub edi, esi
 	inc edi
 
