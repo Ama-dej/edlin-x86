@@ -3,6 +3,18 @@
 section .text
 global _start
 _start:
+	mov eax, 5
+	mov ebx, file_name
+	mov ecx, 2
+	int 80h
+
+	mov dword[f_dscrptor], eax
+
+	mov ebx, eax 
+	mov eax, 3
+	mov ecx, fbuf
+	mov edx, 1024 * 1024
+	int 80h
 
 mloop:
 	call clr_ibuf
@@ -53,6 +65,9 @@ cmds:
 	cmp al, 'd'
 	je delete
 
+	cmp al, 'e'
+	je eksit 
+
 	cmp al, 'i'
 	je insert 
 
@@ -60,7 +75,7 @@ cmds:
 	je list
 
 	cmp al, 'q' 
-	je exit
+	je quit 
 
 	inc esi
 	dec ecx
@@ -219,6 +234,30 @@ delete:
 
 	jmp mloop
 
+
+;Exits and saves the file ('e').
+eksit:
+	mov eax, 10
+	mov ebx, file_name
+	int 80h
+
+	mov eax, 8
+	mov ebx, file_name
+	mov ecx, 0664o
+	int 80h
+
+	mov dword[f_dscrptor], eax
+
+	mov eax, fbuf
+	call buf_len
+
+	mov edx, eax
+	mov eax, 4
+	mov ebx, dword[f_dscrptor]
+	mov ecx, fbuf
+	int 80h
+
+	jmp quit 
 
 ;Inserts lines on the current index until '.' is given. (arg0 + 'i')
 ;arg0 defaults to current line
@@ -444,7 +483,11 @@ inv_input_err:
 	jmp mloop
 
 ;exit (currently spits out technical messages) 
-exit:
+quit:
+	mov eax, 6
+	mov ebx, dword[f_dscrptor]
+	int 80h
+	
 	mov ebx, fbuf 
 
 eprint:
@@ -485,3 +528,6 @@ section .data
 	entry_err_msg: db "Entry error.", 0x0A, 0
 	inv_input_msg: db "Invalid user input.", 0x0A, 0
 	a_prompt: db " : "
+
+	f_dscrptor: dd 0
+	file_name: db "test.txt"
