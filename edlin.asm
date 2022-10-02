@@ -128,6 +128,10 @@ append:
 	
 	jmp .aloop
 
+
+;Deletes lines from 1st index to 2nd index with both points included (arg0, arg1 + 'd').
+;If only arg0 is given it deletes the line on that index.
+;arg0 defaults to current line.
 delete:
 	mov esi, dword[args]
 
@@ -153,7 +157,7 @@ delete:
 	jl .del	
 
 	cmp ecx, edi
-	jle .jmp_to_nrst 
+	jle .jmp_bck 
 
 	mov ebx, edi 
 	sub ebx, esi
@@ -162,7 +166,7 @@ delete:
 
 	jmp .del		
 
-.jmp_to_nrst:
+.jmp_bck:
 	sub ecx, esi
 	inc ecx
 
@@ -214,9 +218,9 @@ delete:
 	jmp .l2
 
 	jmp mloop
-		
 
-;Inserts lines on the current index until '.' is given. (arg0, 'i')
+
+;Inserts lines on the current index until '.' is given. (arg0 + 'i')
 ;arg0 defaults to current line
 insert:
 	mov eax, dword[args]
@@ -470,11 +474,14 @@ reeeeeeEEE:
 	mov ebx, 0
 	int 80h
 
+section .bss
+	fbuf: resb 1024 * 1024
+	ibuf: resb 1024
+
+	cur_line: resd 1 
+	args: resd 3 
+
 section .data
 	entry_err_msg: db "Entry error.", 0x0A, 0
 	inv_input_msg: db "Invalid user input.", 0x0A, 0
-	args: times 3 dd -1 
-	cur_line: dd 0 
 	a_prompt: db " : "
-	fbuf: times 1024 * 1024 db 0
-	ibuf: times 1024 db 0
