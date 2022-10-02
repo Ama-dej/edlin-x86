@@ -135,8 +135,8 @@ append:
 delete:
 	mov esi, dword[args]
 
-	cmp esi, -1
-	jne .nz
+	cmp esi, -1 
+	jg .nz
 
 	mov esi, dword[cur_line]
 
@@ -145,8 +145,8 @@ delete:
 	jz mloop
 
 	mov edi, dword[args+4]
-	cmp edi, -1
-	jne .nmo
+	cmp edi, -1 
+	jg .nmo
 
 	mov edi, esi
 
@@ -336,10 +336,10 @@ list:
 replaceln:
 	mov esi, dword[args]
 
-	cmp esi, -1
-	je mloop
-
 	cmp esi, 0
+	jl mloop
+
+	;cmp esi, 0
 	jnz .not_zr 
 	mov esi, 1
 
