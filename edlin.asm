@@ -3,6 +3,8 @@
 section .text
 global _start
 _start:
+	mov dword[cur_line], 0
+
 	mov eax, 5
 	mov ebx, file_name
 	mov ecx, 2
@@ -57,7 +59,7 @@ ploop:
 	dec esi
 
 cmds:
-	movzx eax, byte[esi]
+	mov al, byte[esi]
 
 	cmp al, 'a'
 	je append
@@ -76,6 +78,9 @@ cmds:
 
 	cmp al, 'q' 
 	je quit 
+
+	cmp al, 's'
+	je search
 
 	inc esi
 	dec ecx
@@ -264,16 +269,10 @@ eksit:
 insert:
 	mov eax, dword[args]
 
-	cmp eax, -1
-	je .chk_if_zero 
+	cmp eax, 0 
+	jl .iloop 
 
 	mov dword[cur_line], eax
-	jmp .iloop
-
-.chk_if_zero:
-	cmp dword[cur_line], 0
-	jnz .iloop
-	mov dword[cur_line], 1
 
 .iloop:
 	mov eax, 4
@@ -517,16 +516,112 @@ reeeeeeEEE:
 	mov ebx, 0
 	int 80h
 
+;Searches for the first match for the text given. (arg0, arg1 + 's' + string)
+;If only arg0 is given or no arguments are given it searches from the current line incrementally.
+search:
+	mov esi, dword[args]
+	mov edi, dword[args+4]
+
+	cmp esi, -1 
+	jg .esi_ok
+
+	mov esi, dword[cur_line]
+
+.esi_ok:
+	mov edx, ibuf
+
+	cmp esi, 0
+	jnz .esi_bigr?
+
+	inc esi
+
+.esi_bigr?:
+	cmp esi, edi
+	jg .nf	
+
+.find_s:
+	cmp byte[edx], 's'
+	je .found_s	
+	inc edx
+	jmp .find_s
+
+.found_s:
+	inc edx
+	mov eax, fbuf
+	mov ecx, esi
+	call cntlenln
+
+	mov ecx, eax
+
+	mov eax, edx
+	call buf_len
+	dec eax
+	mov byte[edx+eax], 0
+
+.sloop:
+	mov eax, ecx
+	add eax, fbuf
+	cmp byte[eax], 0
+	jz .nf
+	cmp byte[eax], 0x0A
+	jne .no_nl
+
+	cmp esi, edi
+	je .nf
+
+	inc esi
+
+.no_nl:
+	push ecx
+
+	mov eax, edx
+	mov ebx, fbuf
+	call strcmp
+
+	pop ecx
+
+	inc ecx
+
+	cmp eax, 0
+	jz .sloop
+
+	mov dword[cur_line], esi
+
+	mov eax, esi
+	call iprint
+
+	mov eax, ':'
+	call putchar
+	mov eax, '*'
+	call putchar
+
+	add ecx, fbuf
+	dec ecx
+	mov eax, ecx
+	call lnprint
+
+	jmp mloop
+
+.nf:	
+	mov eax, 4
+	mov ebx, 1
+	mov ecx, not_found_msg
+	mov edx, 11
+	int 80h
+
+	jmp mloop
+
 section .bss
 	fbuf: resb 1024 * 1024
 	ibuf: resb 1024
 
-	cur_line: resd 1 
 	args: resd 3 
+	cur_line: resd 1 
 
 section .data
 	entry_err_msg: db "Entry error.", 0x0A, 0
 	inv_input_msg: db "Invalid user input.", 0x0A, 0
+	not_found_msg: db "Not found.", 0x0A, 0
 	a_prompt: db " : "
 
 	f_dscrptor: dd 0

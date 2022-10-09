@@ -197,6 +197,40 @@ cntlenln:
 	pop ebx
 	ret
 
+strcmp:
+	push edx
+
+	add ebx, ecx
+	mov edx, eax
+
+	call buf_len
+	mov ecx, eax 
+
+	xor eax, eax
+	mov ah, 1
+
+.l:
+	mov al, byte[edx]
+	cmp al, byte[ebx] 
+	je .eq
+
+	xor ah, ah
+	jmp .out
+
+.eq:
+	dec ecx
+	cmp ecx, 0
+	jle .out
+
+	inc edx
+	inc ebx
+	jmp .l
+
+.out:
+	shr eax, 8
+	pop edx
+	ret
+
 mv_cpy:
 	pusha
 
