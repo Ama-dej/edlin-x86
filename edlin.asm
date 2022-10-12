@@ -536,6 +536,8 @@ search:
 	inc esi
 
 .esi_bigr?:
+	cmp edi, 0
+	jl .find_s
 	cmp esi, edi
 	jg .nf	
 
