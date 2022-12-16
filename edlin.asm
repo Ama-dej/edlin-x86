@@ -3,6 +3,25 @@
 section .text
 global _start
 _start:
+	pop ecx
+	cmp ecx, 2
+	jne param_err 
+
+	pop eax
+	pop eax
+
+	mov ebx, file_name
+
+read_file_name:
+	cmp byte[eax], 0
+	jz .out
+	mov dl, byte[eax]
+	mov byte[ebx], dl 
+	inc ebx
+	inc eax
+	jmp read_file_name
+
+.out:	
 	mov dword[cur_line], 0
 
 	mov eax, 5
@@ -481,36 +500,47 @@ inv_input_err:
 
 	jmp mloop
 
-;exit (currently spits out technical messages) 
+param_err:
+	mov eax, param_err_msg 
+	mov ecx, eax
+	call buf_len
+	mov edx, eax
+	mov eax, 4
+	mov ebx, 1
+	int 80h
+
+	jmp quit 
+
+;exit (spoiler: exits the program) 
 quit:
 	mov eax, 6
 	mov ebx, dword[f_dscrptor]
 	int 80h
 	
-	mov ebx, fbuf 
+	; mov ebx, fbuf 
 
 eprint:
-	movzx eax, byte[ebx]
-	cmp al, 0
-	jz reeeeeeEEE 
+	; movzx eax, byte[ebx]
+	; cmp al, 0
+	; jz reeeeeeEEE 
 	
-	call putchar
-	inc ebx
-	jmp eprint
+	; call putchar
+	; inc ebx
+	; jmp eprint
 
 reeeeeeEEE:
-	mov eax, [args]
-	call hprintln 
-	mov eax, [args+4]
-	call hprintln
-	mov eax, [args+8]
-	call hprintln
+	; mov eax, [args]
+	; call hprintln 
+	; mov eax, [args+4]
+	; call hprintln
+	; mov eax, [args+8]
+	; call hprintln
 
-	mov eax, [cur_line]
-	call iprint
+	; mov eax, [cur_line]
+	; call iprint
 
-	mov eax, 0x0A
-	call putchar
+	; mov eax, 0x0A
+	; call putchar
 
 	mov eax, 1
 	mov ebx, 0
@@ -620,11 +650,13 @@ section .bss
 	args: resd 3 
 	cur_line: resd 1 
 
+	file_name: resb 128 
+
 section .data
+	param_err_msg: db "Syntax: edlin <file-name>", 0x0A, 0
 	entry_err_msg: db "Entry error.", 0x0A, 0
 	inv_input_msg: db "Invalid user input.", 0x0A, 0
 	not_found_msg: db "Not found.", 0x0A, 0
 	a_prompt: db " : "
 
 	f_dscrptor: dd 0
-	file_name: db "test.txt"
